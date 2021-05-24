@@ -1,0 +1,35 @@
+#!/bin/bash 
+#My_SQL must be running
+
+#get pod names 
+
+DNS=$(kubectl get pods | grep 367f45fd-1dd2-11b2-8008-080027b24dn2 | awk '{print $1}')
+MYSQL=$(kubectl get pods | grep 367f45fd-1dd2-11b2-8001-080027b24sq2 | awk '{print $1}')
+FHOSS=$(kubectl get pods | grep  367f45fd-1dd2-11b2-8006-080027b24hs3 | awk '{print $1}')
+PCSCF=$(kubectl get pods | grep 367f45fd-1dd2-11b2-8001-080027b24pc2 | awk '{print $1}')
+ICSCF=$(kubectl get pods | grep 367f45fd-1dd2-11b2-8002-080027b24ic2 | awk '{print $1}')
+SCSCF=$(kubectl get pods | grep 367f45fd-1dd2-11b2-8004-080027b24sc2 | awk '{print $1}')
+RTPENGINE=$(kubectl get pods | grep 367f45fd-1dd2-11b2-8001-080027b24rt2 | awk '{print $1}')
+
+
+#get IPs of pods
+
+PCSCF_IP=$(kubectl describe pod "$PCSCF" | grep IP | awk '{print $2}')
+
+MYSQL_IP=$(kubectl describe pod "$MYSQL" | grep IP | awk '{print $2}')
+
+ICSCF_IP=$(kubectl describe pod "$ICSCF"  | grep IP | awk '{print $2}')
+
+FHOSS_IP=$(kubectl describe pod "$FHOSS"  | grep IP | awk '{print $2}')
+
+SCSCF_IP=$(kubectl describe pod "$SCSCF"  | grep IP | awk '{print $2}')
+
+DNS_IP=$(kubectl describe pod "$DNS" | grep IP | awk '{print $2}')
+
+RTPENGINE_IP="RTPENGINE_IP"
+
+
+#Start FHOSS service in the FHOSS pod
+ 
+kubectl exec -it "$FHOSS" -- bash -c "/mnt/fhoss/fhoss_init.sh "$MYSQL_IP" "$FHOSS_IP" "$DNS_IP""
+

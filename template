@@ -1,0 +1,63 @@
+#!/bin/bash 
+#My_SQL is configured by default we will wait until it goes up 
+#sleep 10
+
+#get pod names 
+DNS=$(kubectl get pods | grep 367f45fd-1dd2-11b2-8008-080027b24dn2 | awk '{print $1}')
+MYSQL=$(kubectl get pods | grep 367f45fd-1dd2-11b2-8001-080027b24sq2 | awk '{print $1}')
+FHOSS=$(kubectl get pods | grep  367f45fd-1dd2-11b2-8006-080027b24hs2 | awk '{print $1}')
+PCSCF=$(kubectl get pods | grep 367f45fd-1dd2-11b2-8001-080027b24pc2 | awk '{print $1}')
+ICSCF=$(kubectl get pods | grep 367f45fd-1dd2-11b2-8002-080027b24ic2 | awk '{print $1}')
+SCSCF=$(kubectl get pods | grep 367f45fd-1dd2-11b2-8004-080027b24sc2 | awk '{print $1}')
+RTPENGINE=$(kubectl get pods | grep 367f45fd-1dd2-11b2-8001-080027b24rt2 | awk '{print $1}')
+
+
+#get ip of pcscf pod
+PCSCF_IP=$(kubectl describe pod "$PCSCF" | grep IP | awk '{print $2}')
+
+MYSQL_IP=$(kubectl describe pod "$MYSQL" | grep IP | awk '{print $2}')
+
+ICSCF_IP=$(kubectl describe pod "$ICSCF"  | grep IP | awk '{print $2}')
+
+FHOSS_IP=$(kubectl describe pod "$FHOSS"  | grep IP | awk '{print $2}')
+
+SCSCF_IP=$(kubectl describe pod "$SCSCF"  | grep IP | awk '{print $2}')
+
+DNS_IP=$(kubectl describe pod "$DNS" | grep IP | awk '{print $2}')
+
+RTPENGINE_IP="RTPENGINE_IP"
+
+#copy ip add in
+
+#copy ip add in the hss configuration and start it 
+kubectl exec -it "$FHOSS" -- bash -c "/mnt/fhoss/fhoss_init.sh "$MYSQL_IP" "$FHOSS_IP""
+#HSS has to be up before I-CSCF and S-CSCF 
+sleep 20
+
+#copy ip add in the pcscf configuration and start it
+kubectl exec -it "$PCSCF" -- bash -c " /mnt/pcscf/pcscf_init.sh "$MYSQL_IP" "$PCSCF_IP" "$RTPENGINE_IP" "$DNS_IP" "
+
+#copy ip add in the icscf configuration and start it
+kubectl exec -it "$ICSCF"  -- bash -c " /mnt/icscf/icscf_init.sh "$MYSQL_IP" "$FHOSS_IP" "$ICSCF_IP" "$DNS_IP" "
+
+#copy ip add in the scscf configuration and start it
+kubectl exec -it "$SCSCF" -- bash -c "/mnt/scscf/scscf_init.sh "$MYSQL_IP" "$FHOSS_IP" "$SCSCF_IP" "$DNS_IP" "
+
+#copy ip add in the dns configuration and start it
+kubectl exec -it "$DNS" -- bash -c " /mnt/dns/dns_init.sh "$DNS_IP" "$PCSCF_IP" "$ICSCF_IP" "$SCSCF_IP" "$FHOSS_IP""
+ 
+: '
+echo "$PCSCF_IP"
+echo "$MYSQL_IP"
+echo "$ICSCF_IP"
+echo " $SCSCF_IP"
+echo "$DNS_IP"
+echo "$RTPENGINE_IP"
+echo "$FHOSS_IP"
+echo "$DNS "
+echo "$SCSCF"
+echo "$ICSCF"
+echo "$PCSCF"
+echo "$MYSQL" 
+echo "$FHOSS"
+'
